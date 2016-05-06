@@ -7,18 +7,20 @@ import mine_solver
 import time
 
 
-def do_stuff():
+def main():
     hwnd = findwindows.find_windows(class_name="ThunderRT6FormDC", title="Minesweeper X")[0]
     app = get_app(hwnd)
     hwndw = HwndWrapper(hwnd)
     while True:
         board = get_board(app)
+        status = mine_solver.get_board_status(board)
+        if status is Const.BoardStatus.BURST:
+            reset_board(app)
+            continue
         result_list = mine_solver.solve(board)
+        action(hwndw, result_list)
         if len(result_list) == 0:
             break
-        action(hwndw, result_list)
-        time.sleep(0.25)
-        # output(board)
 
 
 def get_board(app):
@@ -33,7 +35,10 @@ def get_board(app):
     for y in range(0, height):
         result_board.append([])
         for x in range(0, width):
-            result_board[y].append(__get_cell(img, y, x))
+            cell = __get_cell(img, y, x)
+            if cell is None:
+                pass
+            result_board[y].append(cell)
     return result_board
 
 
@@ -85,20 +90,24 @@ def __get_pixel(img, y, x, idx):
 
 
 def output(board):
-    str_board = stringify_board(board)
+    str_board = __stringify_board(board)
     for y, rrr in enumerate(str_board):
         print()
         for x, ccc in enumerate(rrr):
             print(str_board[y][x], end="")
 
 
-def stringify_board(board):
+def __stringify_board(board):
     str_board = []
     for y, row in enumerate(board):
         str_board.append([])
         for x, cell in enumerate(row):
             str_board[y].append(board[y][x][1])
     return str_board
+
+
+def reset_board(app):
+    app.MinesweeperX.MenuSelect("Game->New")
 
 
 def action(hwnd, action_list):
@@ -126,4 +135,4 @@ def get_app(hwnd):
 
 
 if __name__ == "__main__":
-    do_stuff()
+    main()
