@@ -36,8 +36,6 @@ def get_board(hwnd):
         result_board.append([])
         for x in range(0, width):
             cell = __get_cell(img, y, x)
-            if cell is None:
-                pass
             result_board[y].append(cell)
     return result_board
 
