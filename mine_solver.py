@@ -55,21 +55,23 @@ def __solve_by_single(board):
     # if cellの数字が周りのclosed-floaggedと同じだったら、全部旗つけ
     # if 上のを終えて、cellの周りの旗がcellと同じ数になったら、全部開く
     # listにattach
-    list = []
-    for y, row in enumerate(board):
-        for x, cell in enumerate(board[y]):
+    result_list = []
+    height = len(board)
+    width = len(board[0])
+    for y in range(height):
+        for x in range(width):
             if __is_number(board[y][x]):
                 closed = __get_cell_around(board, y, x, Const.Cell.CLOSED)
                 real_number = board[y][x][0] - len(__get_cell_around(board, y, x, Const.Cell.FLAGGED))
                 if real_number == len(closed) != 0:
                     for cell in closed:
-                        if {"type": Const.CellAction.FLAG, "coord": [cell[0], cell[1]]} not in list:
-                            list.append({"type": Const.CellAction.FLAG, "coord": [cell[0], cell[1]]})
+                        if {"type": Const.CellAction.FLAG, "coord": [cell[0], cell[1]]} not in result_list:
+                            result_list.append({"type": Const.CellAction.FLAG, "coord": [cell[0], cell[1]]})
                 elif real_number == 0:
                     for cell in closed:
-                        if {"type": Const.CellAction.OPEN, "coord": [cell[0], cell[1]]} not in list:
-                            list.append({"type": Const.CellAction.OPEN, "coord": [cell[0], cell[1]]})
-    return list
+                        if {"type": Const.CellAction.OPEN, "coord": [cell[0], cell[1]]} not in result_list:
+                            result_list.append({"type": Const.CellAction.OPEN, "coord": [cell[0], cell[1]]})
+    return result_list
 
 
 def __is_number(cell):
