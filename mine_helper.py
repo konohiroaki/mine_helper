@@ -90,20 +90,13 @@ def __get_pixel(img, y, x, idx):
 
 
 def output(board):
-    str_board = __stringify_board(board)
-    for y, rrr in enumerate(str_board):
-        print()
-        for x, ccc in enumerate(rrr):
-            print(str_board[y][x], end="")
-
-
-def __stringify_board(board):
-    str_board = []
-    for y, row in enumerate(board):
-        str_board.append([])
-        for x, cell in enumerate(row):
-            str_board[y].append(board[y][x][1])
-    return str_board
+    height = len(board)
+    width = len(board[0])
+    for y in range(height):
+        if y is not 0:
+            print()
+        for x in range(width):
+            print(board[y][x][1], end="")
 
 
 def reset_board(hwnd):
