@@ -1,30 +1,30 @@
-from pywinauto import findwindows
-from pywinauto.application import Application
-from pywinauto.controls.HwndWrapper import HwndWrapper
+import win32api
+import win32con
+
 from PIL import ImageGrab
-from mine_const import Const
+from pywinauto import findwindows
+from pywinauto.controls.HwndWrapper import HwndWrapper
+
 import mine_solver
-import time
+from mine_const import Const
 
 
 def main():
-    hwnd = findwindows.find_windows(class_name="ThunderRT6FormDC", title="Minesweeper X")[0]
-    app = get_app(hwnd)
-    hwndw = HwndWrapper(hwnd)
+    hwnd = HwndWrapper(findwindows.find_windows(class_name="ThunderRT6FormDC", title="Minesweeper X")[0])
     while True:
-        board = get_board(app)
+        board = get_board(hwnd)
         status = mine_solver.get_board_status(board)
         if status is Const.BoardStatus.BURST:
-            reset_board(app)
+            reset_board(hwnd)
             continue
         result_list = mine_solver.solve(board)
-        action(hwndw, result_list)
+        action(hwnd, result_list)
         if len(result_list) == 0:
             break
 
 
-def get_board(app):
-    rect = app.MinesweeperX.ClientAreaRect()
+def get_board(hwnd):
+    rect = hwnd.ClientAreaRect()
     img = ImageGrab.grab((rect.left + Const.Padding.LEFT, rect.top + Const.Padding.TOP,
                           rect.right - Const.Padding.RIGHT, rect.bottom - Const.Padding.BOTTOM))
 
@@ -106,32 +106,31 @@ def __stringify_board(board):
     return str_board
 
 
-def reset_board(app):
-    app.MinesweeperX.MenuSelect("Game->New")
+def reset_board(hwnd):
+    hwnd.MenuSelect("Game->New")
 
 
 def action(hwnd, action_list):
+    rect = hwnd.ClientAreaRect()
     for each in action_list:
+        x = rect.left + Const.Padding.LEFT + each["coord"][1] * Const.CellSize.WIDTH
+        y = rect.top + Const.Padding.TOP + each["coord"][0] * Const.CellSize.HEIGHT
         if each["type"] == Const.CellAction.OPEN:
-            __open(hwnd, each["coord"][0], each["coord"][1])
+            __open(x, y)
         else:
-            __flag(hwnd, each["coord"][0], each["coord"][1])
+            __flag(x, y)
 
 
-def __open(hwndw, y, x):
-    hwndw.Click(coords=(Const.CellSize.WIDTH * x + Const.Padding.LEFT,
-                        Const.CellSize.HEIGHT * y + Const.Padding.TOP))
+def __open(x, y):
+    win32api.SetCursorPos((x, y))
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)
 
 
-def __flag(hwndw, y, x):
-    hwndw.RightClick(coords=(Const.CellSize.WIDTH * x + Const.Padding.LEFT,
-                             Const.CellSize.HEIGHT * y + Const.Padding.TOP))
-
-
-def get_app(hwnd):
-    app = Application()
-    app.connect(handle=hwnd)
-    return app
+def __flag(x, y):
+    win32api.SetCursorPos((x, y))
+    win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, x, y, 0, 0)
+    win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, x, y, 0, 0)
 
 
 if __name__ == "__main__":
