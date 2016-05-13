@@ -61,16 +61,14 @@ def __solve_by_single(board):
     for y, x in ((y, x) for y in range(len(board)) for x in range(len(board[0]))):
         if __is_number(board[y][x]):
             closed = __get_cell_around(board, y, x, Const.Cell.CLOSED)
-            real_number = board[y][x][0] - len(__get_cell_around(board, y, x, Const.Cell.FLAGGED))
+            real_number = __get_real_number(board, y, x)
             if real_number == len(closed) != 0:
                 for cell in closed:
-                    if {"type": Const.CellAction.FLAG, "coord": [cell[0], cell[1]]} not in result_list:
-                        result_list.append({"type": Const.CellAction.FLAG, "coord": [cell[0], cell[1]]})
+                    result_list.append({"type": Const.CellAction.FLAG, "coord": (cell[0], cell[1])})
             elif real_number == 0:
                 for cell in closed:
-                    if {"type": Const.CellAction.OPEN, "coord": [cell[0], cell[1]]} not in result_list:
-                        result_list.append({"type": Const.CellAction.OPEN, "coord": [cell[0], cell[1]]})
-    return result_list
+                    result_list.append({"type": Const.CellAction.OPEN, "coord": (cell[0], cell[1])})
+    return list({v["coord"]: v for v in result_list}.values())
 
 
 def __is_number(cell):
@@ -84,12 +82,15 @@ def __is_number(cell):
 
 def __get_cell_around(board, y, x, cell_type):
     cell_list = []
-    for yyy, xxx in ((yy + y, xx + x) for yy in (-1, 0, 1) for xx in (-1, 0, 1)):
-        if (not (yyy == y and xxx == x)
-            and 0 <= yyy < len(board) and 0 <= xxx < len(board[0])
-            and board[yyy][xxx][0] is cell_type[0]):
-            cell_list.append((yyy, xxx))
+    for yy, xx in ((y + ymargin, x + xmargin) for ymargin in (-1, 0, 1) for xmargin in (-1, 0, 1)):
+        if (__is_around(len(board), len(board[0]), (y, x), (yy, xx))
+            and board[yy][xx][0] is cell_type[0]):
+            cell_list.append((yy, xx))
     return cell_list
+
+
+def __get_real_number(board, y, x):
+    return board[y][x][0] - len(__get_cell_around(board, y, x, Const.Cell.FLAGGED))
 
 
 def __solve_by_double(board):
@@ -100,7 +101,30 @@ def __solve_by_double(board):
         1. If the subtracted value is positive, non-shared cells for the cell can be FLAGGED.
         2. If the subtracted value is negative, non-shared cells for the cell can be OPENED.
     """
-    return []
+    result_list = []
+    for y, x in ((y, x) for y in range(len(board)) for x in range(len(board[0])) if __is_number((board[y][x]))):
+        for yy, xx in ((y + ymargin, x + xmargin) for ymargin in (-1, 0, 1) for xmargin in (-1, 0, 1)):
+            if __is_around(len(board), len(board[0]), (y, x), (yy, xx)) and __is_number(board[yy][xx]):
+                yx_cells = __get_cell_around(board, y, x, Const.Cell.CLOSED)
+                yyxx_cells = __get_cell_around(board, yy, xx, Const.Cell.CLOSED)
+                diff = __get_real_number(board, y, x) - __get_real_number(board, yy, xx)
+                non_shared = list(set(yx_cells) - set(yyxx_cells))
+                rev_non_shared = list(set(yyxx_cells) - set(yx_cells))
+                if len(non_shared) == diff:
+                    for cell in non_shared:
+                        result_list.append({"type": Const.CellAction.FLAG, "coord": (cell[0], cell[1])})
+                elif len(non_shared) == abs(diff) and len(rev_non_shared) == len(non_shared):
+                    for cell in non_shared:
+                        result_list.append({"type": Const.CellAction.OPEN, "coord": (cell[0], cell[1])})
+                elif len(rev_non_shared) == 0 and diff == 0:
+                    for cell in non_shared:
+                        result_list.append({"type": Const.CellAction.OPEN, "coord": (cell[0], cell[1])})
+    return list({v["coord"]: v for v in result_list}.values())
+
+
+def __is_around(height, width, cell, neighbor):
+    return (not (cell[0] == neighbor[0] and cell[1] == neighbor[1])
+            and 0 <= neighbor[0] < height and 0 <= neighbor[1] < width)
 
 
 def __guess(board):
