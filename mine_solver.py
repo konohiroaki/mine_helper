@@ -104,21 +104,24 @@ def __solve_by_double(board):
     result_list = []
     for y, x in ((y, x) for y in range(len(board)) for x in range(len(board[0])) if __is_number((board[y][x]))):
         for yy, xx in ((y + ymargin, x + xmargin) for ymargin in (-1, 0, 1) for xmargin in (-1, 0, 1)):
-            if __is_around(len(board), len(board[0]), (y, x), (yy, xx)) and __is_number(board[yy][xx]):
-                yx_cells = __get_cell_around(board, y, x, Const.Cell.CLOSED)
-                yyxx_cells = __get_cell_around(board, yy, xx, Const.Cell.CLOSED)
-                diff = __get_real_number(board, y, x) - __get_real_number(board, yy, xx)
-                non_shared = list(set(yx_cells) - set(yyxx_cells))
-                rev_non_shared = list(set(yyxx_cells) - set(yx_cells))
-                if len(non_shared) == diff:
-                    for cell in non_shared:
-                        result_list.append({"type": Const.CellAction.FLAG, "coord": (cell[0], cell[1])})
-                elif len(non_shared) == abs(diff) and len(rev_non_shared) == len(non_shared):
-                    for cell in non_shared:
-                        result_list.append({"type": Const.CellAction.OPEN, "coord": (cell[0], cell[1])})
-                elif len(rev_non_shared) == 0 and diff == 0:
-                    for cell in non_shared:
-                        result_list.append({"type": Const.CellAction.OPEN, "coord": (cell[0], cell[1])})
+            if __is_around(len(board), len(board[0]), (y, x), (yy, xx)) and board[yy][xx] == Const.Cell.CLOSED:
+                for yyy, xxx in ((yy + ymargin, xx + xmargin) for ymargin in (-1, 0, 1) for xmargin in (-1, 0, 1)):
+                    if __is_around(len(board), len(board[0]), (yy, xx), (yyy, xxx)) and __is_number(board[yyy][xxx]) \
+                            and not (yyy == y and xxx == x):
+                        yx_cells = __get_cell_around(board, y, x, Const.Cell.CLOSED)
+                        yyxx_cells = __get_cell_around(board, yyy, xxx, Const.Cell.CLOSED)
+                        diff = __get_real_number(board, y, x) - __get_real_number(board, yyy, xxx)
+                        non_shared = list(set(yx_cells) - set(yyxx_cells))
+                        rev_non_shared = list(set(yyxx_cells) - set(yx_cells))
+                        if len(non_shared) == diff:
+                            for cell in non_shared:
+                                result_list.append({"type": Const.CellAction.FLAG, "coord": (cell[0], cell[1])})
+                        elif len(non_shared) == abs(diff) and len(rev_non_shared) == len(non_shared):
+                            for cell in non_shared:
+                                result_list.append({"type": Const.CellAction.OPEN, "coord": (cell[0], cell[1])})
+                        elif len(rev_non_shared) == 0 and diff == 0:
+                            for cell in non_shared:
+                                result_list.append({"type": Const.CellAction.OPEN, "coord": (cell[0], cell[1])})
     return list({v["coord"]: v for v in result_list}.values())
 
 
@@ -129,5 +132,7 @@ def __is_around(height, width, cell, neighbor):
 
 def __guess(board):
     """Choose one randomly from CLOSED cells."""
+    if len(__get_cell_with(board, Const.Cell.CLOSED)) < 500:
+        return []
     closed = __get_cell_with(board, Const.Cell.CLOSED)
-    return [{"type": Const.CellAction.OPEN, "coord": closed[random.randrange(len(closed))]}]
+        return [{"type": Const.CellAction.OPEN, "coord": closed[random.randrange(len(closed))]}]
