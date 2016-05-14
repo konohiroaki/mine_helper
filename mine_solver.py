@@ -11,23 +11,23 @@ import random
 def solve(board):
     result_list = []
     board_status = get_board_status(board)
-    if board_status is Const.BoardStatus.START:
+    if board_status == Const.BoardStatus.START:
         result_list += __guess(board)
-    elif board_status is Const.BoardStatus.MIDSTREAM:
+    elif board_status == Const.BoardStatus.MIDSTREAM:
         result_list += __solve_by_single(board)
-        if len(result_list) is 0:
+        if len(result_list) == 0:
             result_list += __solve_by_double(board)
-        if len(result_list) is 0:
+        if len(result_list) == 0:
             result_list += __guess(board)
     return result_list
 
 
 def get_board_status(board):
-    if __count_with(board, Const.Cell.BURST) is not 0:
+    if __count_with(board, Const.Cell.BURST) != 0:
         return Const.BoardStatus.BURST
-    elif __count_with(board, Const.Cell.CLOSED) is 0:
+    elif __count_with(board, Const.Cell.CLOSED) == 0:
         return Const.BoardStatus.END
-    elif __count_with(board, Const.Cell.ZERO) is not 0:
+    elif __count_with(board, Const.Cell.ZERO) != 0:
         return Const.BoardStatus.MIDSTREAM
     else:
         return Const.BoardStatus.START
@@ -37,7 +37,7 @@ def __count_with(board, cell_type):
     count = 0
     coordinates = ((y, x) for y in range(len(board)) for x in range(len(board[0])))
 
-    for _ in ((y, x) for y, x in coordinates if board[y][x] is cell_type):
+    for _ in ((y, x) for y, x in coordinates if board[y][x] == cell_type):
         count += 1
     return count
 
@@ -46,7 +46,7 @@ def __get_with(board, cell_type):
     result_list = []
     coordinates = ((y, x) for y in range(len(board)) for x in range(len(board[0])))
 
-    for y, x in ((y, x) for y, x in coordinates if board[y][x] is cell_type):
+    for y, x in ((y, x) for y, x in coordinates if board[y][x] == cell_type):
         result_list.append([y, x])
     return result_list
 
@@ -147,7 +147,7 @@ def __is_around_with(board, neighbor_coord, cell_type):
 
 def __guess(board):
     """Choose one randomly from CLOSED cells."""
-    if len(__get_with(board, Const.Cell.CLOSED)) < 500:
-        return []
+    # if len(__get_with(board, Const.Cell.CLOSED)) < 500:
+    #     return []
     closed = __get_with(board, Const.Cell.CLOSED)
     return [{"type": Const.CellAction.OPEN, "coord": closed[random.randrange(len(closed))]}]
