@@ -135,4 +135,4 @@ def __guess(board):
     if len(__get_cell_with(board, Const.Cell.CLOSED)) < 500:
         return []
     closed = __get_cell_with(board, Const.Cell.CLOSED)
-        return [{"type": Const.CellAction.OPEN, "coord": closed[random.randrange(len(closed))]}]
+    return [{"type": Const.CellAction.OPEN, "coord": closed[random.randrange(len(closed))]}]
