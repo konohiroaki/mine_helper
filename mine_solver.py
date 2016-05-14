@@ -9,46 +9,32 @@ import random
 
 
 def solve(board):
-    result_list = []
+    results = []
     board_status = get_board_status(board)
     if board_status == Const.BoardStatus.START:
-        result_list += __guess(board)
+        results += __guess(board)
     elif board_status == Const.BoardStatus.MIDSTREAM:
-        result_list += __solve_by_single(board)
-        if len(result_list) == 0:
-            result_list += __solve_by_double(board)
-        if len(result_list) == 0:
-            result_list += __guess(board)
-    return result_list
+        results += __solve_by_single(board)
+        results += __solve_by_double(board)
+        if len(results) == 0:
+            results += __guess(board)
+    return list({v["coord"]: v for v in results}.values())
 
 
 def get_board_status(board):
-    if __count_with(board, Const.Cell.BURST) != 0:
+    if len(__get_with(board, Const.Cell.BURST)) != 0:
         return Const.BoardStatus.BURST
-    elif __count_with(board, Const.Cell.CLOSED) == 0:
+    elif len(__get_with(board, Const.Cell.CLOSED)) == 0:
         return Const.BoardStatus.END
-    elif __count_with(board, Const.Cell.ZERO) != 0:
+    elif len(__get_with(board, Const.Cell.ZERO)) != 0:
         return Const.BoardStatus.MIDSTREAM
     else:
         return Const.BoardStatus.START
 
 
-def __count_with(board, cell_type):
-    count = 0
-    coordinates = ((y, x) for y in range(len(board)) for x in range(len(board[0])))
-
-    for _ in ((y, x) for y, x in coordinates if board[y][x] == cell_type):
-        count += 1
-    return count
-
-
 def __get_with(board, cell_type):
-    result_list = []
     coordinates = ((y, x) for y in range(len(board)) for x in range(len(board[0])))
-
-    for y, x in ((y, x) for y, x in coordinates if board[y][x] == cell_type):
-        result_list.append([y, x])
-    return result_list
+    return [(y, x) for y, x in coordinates if board[y][x] == cell_type]
 
 
 def __solve_by_single(board):
@@ -59,28 +45,26 @@ def __solve_by_single(board):
         2. is zero, all cells around can be OPENED.
     A "number" is actually (shown number - flags around)
     """
-    result_list = []
+    results = []
     coordinates = ((y, x) for y in range(len(board)) for x in range(len(board[0])))
+    number_coords = ((y, x) for y, x in coordinates if __is_number(board[y][x]))
 
-    for y, x in ((y, x) for y, x in coordinates if __is_number(board[y][x])):
+    for y, x in number_coords:
         closed = __get_around_with(board, y, x, Const.Cell.CLOSED)
         real_number = __get_real_number(board, y, x)
 
         if real_number == len(closed) != 0:
             for cell in closed:
-                result_list.append({"type": Const.CellAction.FLAG, "coord": cell})
+                results.append({"type": Const.CellAction.FLAG, "coord": cell})
         elif real_number == 0:
             for cell in closed:
-                result_list.append({"type": Const.CellAction.OPEN, "coord": cell})
+                results.append({"type": Const.CellAction.OPEN, "coord": cell})
 
-    return list({v["coord"]: v for v in result_list}.values())
+    return list({v["coord"]: v for v in results}.values())
 
 
 def __is_number(cell):
-    if Const.Cell.ZERO < cell <= Const.Cell.EIGHT:
-        return True
-    else:
-        return False
+    return Const.Cell.ZERO < cell <= Const.Cell.EIGHT
 
 
 def __get_board_size(board):
@@ -88,12 +72,8 @@ def __get_board_size(board):
 
 
 def __get_around_with(board, y, x, cell_type):
-    result_list = []
-    margin_list = ((ym, xm) for ym in (-1, 0, 1) for xm in (-1, 0, 1) if not ym == xm == 0)
-
-    for yy, xx in ((y + ym, x + xm) for ym, xm in margin_list if __is_around_with(board, (y + ym, x + xm), cell_type)):
-        result_list.append((yy, xx))
-    return result_list
+    margins = ((ym, xm) for ym in (-1, 0, 1) for xm in (-1, 0, 1) if not ym == xm == 0)
+    return [(y + ym, x + xm) for ym, xm in margins if __is_inside_with(board, (y + ym, x + xm), cell_type)]
 
 
 def __get_real_number(board, y, x):
@@ -115,8 +95,8 @@ def __solve_by_double(board):
 
     for y1, x1 in ((y, x) for y, x in coordinates if __is_number((board[y][x]))):
         for yy, xx in ((y1 + ym, x1 + xm) for ym, xm in margins
-                       if __is_around_with(board, (y1 + ym, x1 + xm), Const.Cell.CLOSED)):
-            for y2, x2 in ((yy + ym, xx + xm) for ym, xm in margins if __is_around(board_size, (yy + ym, xx + xm))):
+                       if __is_inside_with(board, (y1 + ym, x1 + xm), Const.Cell.CLOSED)):
+            for y2, x2 in ((yy + ym, xx + xm) for ym, xm in margins if __is_inside(board_size, (yy + ym, xx + xm))):
                 if __is_number(board[y2][x2]) and not (y1 == y2 and x1 == x2):
                     c1_around = __get_around_with(board, y1, x1, Const.Cell.CLOSED)
                     c2_around = __get_around_with(board, y2, x2, Const.Cell.CLOSED)
@@ -135,19 +115,19 @@ def __solve_by_double(board):
     return list({v["coord"]: v for v in result_list}.values())
 
 
-def __is_around(board_size, neighbor_coord):
+def __is_inside(board_size, neighbor_coord):
     return 0 <= neighbor_coord[0] < board_size[0] and 0 <= neighbor_coord[1] < board_size[1]
 
 
-def __is_around_with(board, neighbor_coord, cell_type):
+def __is_inside_with(board, neighbor_coord, cell_type):
     board_size = __get_board_size(board)
 
-    return __is_around(board_size, neighbor_coord) and board[neighbor_coord[0]][neighbor_coord[1]] == cell_type
+    return __is_inside(board_size, neighbor_coord) and board[neighbor_coord[0]][neighbor_coord[1]] == cell_type
 
 
 def __guess(board):
     """Choose one randomly from CLOSED cells."""
-    # if len(__get_with(board, Const.Cell.CLOSED)) < 500:
-    #     return []
+    if len(__get_with(board, Const.Cell.CLOSED)) < 500:
+        return []
     closed = __get_with(board, Const.Cell.CLOSED)
     return [{"type": Const.CellAction.OPEN, "coord": closed[random.randrange(len(closed))]}]

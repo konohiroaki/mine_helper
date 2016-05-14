@@ -14,8 +14,7 @@ def main():
     while True:
         board = get_board(hwnd)
         status = mine_solver.get_board_status(board)
-        if status is Const.BoardStatus.BURST:
-            # break
+        if status == Const.BoardStatus.BURST:
             reset_board(hwnd)
             continue
         result_list = mine_solver.solve(board)
