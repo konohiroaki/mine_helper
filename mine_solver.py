@@ -36,6 +36,7 @@ def get_board_status(board):
 def __count_with(board, cell_type):
     count = 0
     coordinates = ((y, x) for y in range(len(board)) for x in range(len(board[0])))
+
     for _ in ((y, x) for y, x in coordinates if board[y][x] is cell_type):
         count += 1
     return count
@@ -76,9 +77,7 @@ def __solve_by_single(board):
 
 
 def __is_number(cell):
-    if (cell == Const.Cell.ONE or cell == Const.Cell.TWO or cell == Const.Cell.THREE
-        or cell == Const.Cell.FOUR or cell == Const.Cell.FIVE or cell == Const.Cell.SIX
-        or cell == Const.Cell.SEVEN or cell == Const.Cell.EIGHT):
+    if Const.Cell.ZERO < cell <= Const.Cell.EIGHT:
         return True
     else:
         return False
@@ -136,13 +135,14 @@ def __solve_by_double(board):
     return list({v["coord"]: v for v in result_list}.values())
 
 
-def __is_around(board_size, neighbor_cell):
-    return 0 <= neighbor_cell[0] < board_size[0] and 0 <= neighbor_cell[1] < board_size[1]
+def __is_around(board_size, neighbor_coord):
+    return 0 <= neighbor_coord[0] < board_size[0] and 0 <= neighbor_coord[1] < board_size[1]
 
 
-def __is_around_with(board, neighbor_cell, cell_type):
+def __is_around_with(board, neighbor_coord, cell_type):
     board_size = __get_board_size(board)
-    return __is_around(board_size, neighbor_cell) and board[neighbor_cell[0]][neighbor_cell[1]] == cell_type
+
+    return __is_around(board_size, neighbor_coord) and board[neighbor_coord[0]][neighbor_coord[1]] == cell_type
 
 
 def __guess(board):
