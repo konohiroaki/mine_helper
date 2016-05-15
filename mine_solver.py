@@ -32,9 +32,8 @@ def get_board_status(board):
         return Const.BoardStatus.START
 
 
-def __get_with(board, cell_type):
-    coordinates = ((y, x) for y in range(len(board)) for x in range(len(board[0])))
-    return [(y, x) for y, x in coordinates if board[y][x] == cell_type]
+def __get_board_size(board):
+    return len(board), len(board[0])
 
 
 def __solve_by_single(board):
@@ -66,30 +65,6 @@ def __solve_by_single(board):
             results += [{"type": Const.CellAction.OPEN, "coord": coord} for coord in around]
 
     return list({v["coord"]: v for v in results}.values())
-
-
-def __is_number(cell):
-    return Const.Cell.ZERO[0] < cell[0] <= Const.Cell.EIGHT[0]
-
-
-def __get_board_size(board):
-    return len(board), len(board[0])
-
-
-def __get_around(board, coord):
-    y, x = coord
-    board_size = __get_board_size(board)
-    margins = ((ym, xm) for ym in (-1, 0, 1) for xm in (-1, 0, 1) if not ym == xm == 0)
-    return [(y + ym, x + xm) for ym, xm in margins if __is_inside(board_size, (y + ym, x + xm))]
-
-
-def __get_around_with(board, coord, cell_type):
-    around = __get_around(board, coord)
-    return [(yy, xx) for yy, xx in around if board[yy][xx] == cell_type]
-
-
-def __get_real_number(board, coord):
-    return board[coord[0]][coord[1]][0] - len(__get_around_with(board, coord, Const.Cell.FLAGGED))
 
 
 def __solve_by_double(board):
@@ -140,15 +115,6 @@ def __solve_by_double(board):
     return list({v["coord"]: v for v in results}.values())
 
 
-def __is_inside(board_size, coord):
-    return 0 <= coord[0] < board_size[0] and 0 <= coord[1] < board_size[1]
-
-
-def __is_inside_with(board, coord, cell_type):
-    board_size = __get_board_size(board)
-    return __is_inside(board_size, coord) and board[coord[0]][coord[1]] == cell_type
-
-
 def __guess(board, board_status):
     """Choose one randomly from CLOSED cells."""
 
@@ -159,6 +125,10 @@ def __guess(board, board_status):
         return []
     else:
         return __get_least_prob(board)
+
+
+def __get_real_number(board, coord):
+    return board[coord[0]][coord[1]][0] - len(__get_around_with(board, coord, Const.Cell.FLAGGED))
 
 
 def __get_least_prob(board):
@@ -175,3 +145,33 @@ def __get_least_prob(board):
                 least_prob = prob
                 result = around[random.randrange(len(around))]
     return [{"type": Const.CellAction.OPEN, "coord": result}]
+
+
+def __get_with(board, cell_type):
+    coordinates = ((y, x) for y in range(len(board)) for x in range(len(board[0])))
+    return [(y, x) for y, x in coordinates if board[y][x] == cell_type]
+
+
+def __get_around(board, coord):
+    y, x = coord
+    board_size = __get_board_size(board)
+    margins = ((ym, xm) for ym in (-1, 0, 1) for xm in (-1, 0, 1) if not ym == xm == 0)
+    return [(y + ym, x + xm) for ym, xm in margins if __is_inside(board_size, (y + ym, x + xm))]
+
+
+def __get_around_with(board, coord, cell_type):
+    around = __get_around(board, coord)
+    return [(yy, xx) for yy, xx in around if board[yy][xx] == cell_type]
+
+
+def __is_number(cell):
+    return Const.Cell.ZERO[0] < cell[0] <= Const.Cell.EIGHT[0]
+
+
+def __is_inside(board_size, coord):
+    return 0 <= coord[0] < board_size[0] and 0 <= coord[1] < board_size[1]
+
+
+def __is_inside_with(board, coord, cell_type):
+    board_size = __get_board_size(board)
+    return __is_inside(board_size, coord) and board[coord[0]][coord[1]] == cell_type
