@@ -71,9 +71,15 @@ def __get_board_size(board):
     return len(board), len(board[0])
 
 
-def __get_around_with(board, y, x, cell_type):
+def __get_around(board, y, x):
+    board_size = __get_board_size(board)
     margins = ((ym, xm) for ym in (-1, 0, 1) for xm in (-1, 0, 1) if not ym == xm == 0)
-    return [(y + ym, x + xm) for ym, xm in margins if __is_inside_with(board, (y + ym, x + xm), cell_type)]
+    return [(y + ym, x + xm) for ym, xm in margins if __is_inside(board_size, (y + ym, x + xm))]
+
+
+def __get_around_with(board, y, x, cell_type):
+    around = __get_around(board, y, x)
+    return [(yy, xx) for yy, xx in around if board[yy][xx] == cell_type]
 
 
 def __get_real_number(board, y, x):
@@ -83,36 +89,38 @@ def __get_real_number(board, y, x):
 def __solve_by_double(board):
     """Solve the board by comparing with neighbor cell.
 
-    If abs(a number cell - its neighbor number cell) is same as either's non-shared cells count, those non-shared
+    y1
+    If (a number cell - its neighbor number cell which shares a 1 or more CLOSED cells) is same as either's non-shared
+    cells
+    count,
+    those non-shared
     cells will be determined.
         1. If the subtracted value is positive, non-shared cells for the cell can be FLAGGED.
         2. If the subtracted value is negative, non-shared cells for the cell can be OPENED.
     """
-    result_list = []
-    board_size = __get_board_size(board)
-    coordinates = ((y, x) for y in range(len(board)) for x in range(len(board[0])))
-    margins = [(ym, xm) for ym in (-1, 0, 1) for xm in (-1, 0, 1) if not ym == xm == 0]
+    results = []
+    c1_list = ((y, x) for y in range(len(board)) for x in range(len(board[0])) if __is_number(board[y][x]))
 
-    for y1, x1 in ((y, x) for y, x in coordinates if __is_number((board[y][x]))):
-        for yy, xx in ((y1 + ym, x1 + xm) for ym, xm in margins
-                       if __is_inside_with(board, (y1 + ym, x1 + xm), Const.Cell.CLOSED)):
-            for y2, x2 in ((yy + ym, xx + xm) for ym, xm in margins if __is_inside(board_size, (yy + ym, xx + xm))):
-                if __is_number(board[y2][x2]) and not (y1 == y2 and x1 == x2):
-                    c1_around = __get_around_with(board, y1, x1, Const.Cell.CLOSED)
-                    c2_around = __get_around_with(board, y2, x2, Const.Cell.CLOSED)
-                    c1_non_shared = list(set(c1_around) - set(c2_around))
-                    c2_non_shared = list(set(c2_around) - set(c1_around))
-                    diff = __get_real_number(board, y1, x1) - __get_real_number(board, y2, x2)
-                    if len(c1_non_shared) == diff:
-                        for cell in c1_non_shared:
-                            result_list.append({"type": Const.CellAction.FLAG, "coord": cell})
-                    elif len(c1_non_shared) == -diff and len(c2_non_shared) == len(c1_non_shared):
-                        for cell in c1_non_shared:
-                            result_list.append({"type": Const.CellAction.OPEN, "coord": cell})
-                    elif len(c2_non_shared) == 0 and diff == 0:
-                        for cell in c1_non_shared:
-                            result_list.append({"type": Const.CellAction.OPEN, "coord": cell})
-    return list({v["coord"]: v for v in result_list}.values())
+    for y1, x1 in c1_list:
+        c1_around = __get_around_with(board, y1, x1, Const.Cell.CLOSED)
+        c2_list = [(y2, x2) for yy, xx in c1_around for y2, x2 in __get_around(board, yy, xx)
+                   if __is_number(board[y2][x2]) if not (y1 == y2 and x1 == x2)]
+
+        for y2, x2 in c2_list:
+            c2_around = __get_around_with(board, y2, x2, Const.Cell.CLOSED)
+            c1_non_shared = list(set(c1_around) - set(c2_around))
+            c2_non_shared = list(set(c2_around) - set(c1_around))
+            diff = __get_real_number(board, y1, x1) - __get_real_number(board, y2, x2)
+            if len(c1_non_shared) == diff:
+                for cell in c1_non_shared:
+                    results.append({"type": Const.CellAction.FLAG, "coord": cell})
+            elif len(c1_non_shared) == -diff and len(c2_non_shared) == len(c1_non_shared):
+                for cell in c1_non_shared:
+                    results.append({"type": Const.CellAction.OPEN, "coord": cell})
+            elif len(c2_non_shared) == 0 and diff == 0:
+                for cell in c1_non_shared:
+                    results.append({"type": Const.CellAction.OPEN, "coord": cell})
+    return list({v["coord"]: v for v in results}.values())
 
 
 def __is_inside(board_size, neighbor_coord):
