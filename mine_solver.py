@@ -12,12 +12,12 @@ def solve(board):
     results = []
     board_status = get_board_status(board)
     if board_status == Const.BoardStatus.START:
-        results += __guess(board)
+        results += __guess(board, board_status)
     elif board_status == Const.BoardStatus.MIDSTREAM:
         results += __solve_by_single(board)
         results += __solve_by_double(board)
         if len(results) == 0:
-            results += __guess(board)
+            results += __guess(board, board_status)
     return list({v["coord"]: v for v in results}.values())
 
 
@@ -149,9 +149,29 @@ def __is_inside_with(board, coord, cell_type):
     return __is_inside(board_size, coord) and board[coord[0]][coord[1]] == cell_type
 
 
-def __guess(board):
+def __guess(board, board_status):
     """Choose one randomly from CLOSED cells."""
-    if len(__get_with(board, Const.Cell.CLOSED)) < 500:
+
+    if board_status == Const.BoardStatus.START:
+        closed = __get_with(board, Const.Cell.CLOSED)
+        return [{"type": Const.CellAction.OPEN, "coord": closed[random.randrange(len(closed))]}]
+    elif len(__get_with(board, Const.Cell.CLOSED)) < 200:
         return []
-    closed = __get_with(board, Const.Cell.CLOSED)
-    return [{"type": Const.CellAction.OPEN, "coord": closed[random.randrange(len(closed))]}]
+    else:
+        return __get_least_prob(board)
+
+
+def __get_least_prob(board):
+    number_coords = ((y, x) for y in range(len(board)) for x in range(len(board[0])) if __is_number(board[y][x]))
+
+    least_prob = 1
+    result = None
+    for coord in number_coords:
+        real_number = __get_real_number(board, coord)
+        if real_number != 0:
+            around = __get_around_with(board, coord, Const.Cell.CLOSED)
+            prob = real_number / len(around)
+            if prob < least_prob:
+                least_prob = prob
+                result = around[random.randrange(len(around))]
+    return [{"type": Const.CellAction.OPEN, "coord": result}]
