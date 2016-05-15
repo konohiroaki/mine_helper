@@ -69,7 +69,7 @@ def __solve_by_single(board):
 
 
 def __is_number(cell):
-    return Const.Cell.ZERO < cell <= Const.Cell.EIGHT
+    return Const.Cell.ZERO[0] < cell[0] <= Const.Cell.EIGHT[0]
 
 
 def __get_board_size(board):
