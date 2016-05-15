@@ -38,27 +38,32 @@ def __get_with(board, cell_type):
 
 
 def __solve_by_single(board):
-    """Solve the board only by referring single cell.
+    """Solve the board only by referring single number cell.
 
-    If a number cell
-        1. has exactly same number of CLOSED cells around, then all of them can be FLAGGED
-        2. is zero, all cells around can be OPENED.
-    A "number" is actually (shown number - flags around)
+        A   B   C
+      +-----------+
+    a | 1 | 1 | 1 |
+      |---|---|---|
+    b | 1 | ? | ? |
+      +-----------+
+
+    ::How to solve by single::
+    1. When coord->"aA":
+        There is only "bB" CLOSED around, Thus "bB" can be FLAGGED.
+    2. When After 1. coord->aB:
+        There is a flag on "bB". Thus "bC" can be OPENED.
     """
     results = []
-    coordinates = ((y, x) for y in range(len(board)) for x in range(len(board[0])))
-    number_coords = ((y, x) for y, x in coordinates if __is_number(board[y][x]))
+    number_coords = ((y, x) for y in range(len(board)) for x in range(len(board[0])) if __is_number(board[y][x]))
 
-    for y, x in number_coords:
-        closed = __get_around_with(board, y, x, Const.Cell.CLOSED)
-        real_number = __get_real_number(board, y, x)
+    for coord in number_coords:
+        around = __get_around_with(board, coord, Const.Cell.CLOSED)
+        real_number = __get_real_number(board, coord)
 
-        if real_number == len(closed) != 0:
-            for cell in closed:
-                results.append({"type": Const.CellAction.FLAG, "coord": cell})
+        if real_number == len(around) != 0:
+            results += [{"type": Const.CellAction.FLAG, "coord": coord} for coord in around]
         elif real_number == 0:
-            for cell in closed:
-                results.append({"type": Const.CellAction.OPEN, "coord": cell})
+            results += [{"type": Const.CellAction.OPEN, "coord": coord} for coord in around]
 
     return list({v["coord"]: v for v in results}.values())
 
@@ -71,66 +76,77 @@ def __get_board_size(board):
     return len(board), len(board[0])
 
 
-def __get_around(board, y, x):
+def __get_around(board, coord):
+    y, x = coord
     board_size = __get_board_size(board)
     margins = ((ym, xm) for ym in (-1, 0, 1) for xm in (-1, 0, 1) if not ym == xm == 0)
     return [(y + ym, x + xm) for ym, xm in margins if __is_inside(board_size, (y + ym, x + xm))]
 
 
-def __get_around_with(board, y, x, cell_type):
-    around = __get_around(board, y, x)
+def __get_around_with(board, coord, cell_type):
+    around = __get_around(board, coord)
     return [(yy, xx) for yy, xx in around if board[yy][xx] == cell_type]
 
 
-def __get_real_number(board, y, x):
-    return board[y][x][0] - len(__get_around_with(board, y, x, Const.Cell.FLAGGED))
+def __get_real_number(board, coord):
+    return board[coord[0]][coord[1]][0] - len(__get_around_with(board, coord, Const.Cell.FLAGGED))
 
 
 def __solve_by_double(board):
-    """Solve the board by comparing with neighbor cell.
+    """Solve the board by referring two number cells.
 
-    y1
-    If (a number cell - its neighbor number cell which shares a 1 or more CLOSED cells) is same as either's non-shared
-    cells
-    count,
-    those non-shared
-    cells will be determined.
-        1. If the subtracted value is positive, non-shared cells for the cell can be FLAGGED.
-        2. If the subtracted value is negative, non-shared cells for the cell can be OPENED.
+        A   B   C   D
+      +---------------+
+    a | 1 | 1 | 2 | 1 |
+      |---|---|---|---|
+    b | ? | ? | ? | ? |
+      +---------------+
+
+    ::Word Definition::
+    c1: A coordinate of a number cell.
+    c2: A coordinate of a number cell positioned NEARBY c1.
+    NEARBY: A place which has at least one shared linked CLOSED cell.
+
+    ::How to solve by double::
+    1. When c1->"aB", c2->"aA":
+        According to "aA", there is a mine in "bA or "bB", Thus "bC" can be OPENED.
+    2. When c1->"aB", c2->"aC":
+        According to "aC", there is a mine in "bB or "bC". Thus "bA" can be OPENED.
+    3. When c1->"aC", c2->"aB":
+        According to "aB", there is only one mine in "bB" and "bC" at most. Thus "bD" can be FLAGGED.
     """
     results = []
     c1_list = ((y, x) for y in range(len(board)) for x in range(len(board[0])) if __is_number(board[y][x]))
 
-    for y1, x1 in c1_list:
-        c1_around = __get_around_with(board, y1, x1, Const.Cell.CLOSED)
-        c2_list = [(y2, x2) for yy, xx in c1_around for y2, x2 in __get_around(board, yy, xx)
-                   if __is_number(board[y2][x2]) if not (y1 == y2 and x1 == x2)]
+    for c1 in c1_list:
+        y1, x1 = c1
+        c1_around = set(__get_around_with(board, c1, Const.Cell.CLOSED))
+        c2_list = ((y2, x2) for yy, xx in c1_around for y2, x2 in __get_around(board, (yy, xx))
+                   if __is_number(board[y2][x2]) if not (y1 == y2 and x1 == x2))
 
-        for y2, x2 in c2_list:
-            c2_around = __get_around_with(board, y2, x2, Const.Cell.CLOSED)
-            c1_non_shared = list(set(c1_around) - set(c2_around))
-            c2_non_shared = list(set(c2_around) - set(c1_around))
-            diff = __get_real_number(board, y1, x1) - __get_real_number(board, y2, x2)
+        for c2 in c2_list:
+            c2_around = set(__get_around_with(board, c2, Const.Cell.CLOSED))
+            c1_non_shared = c1_around - c2_around
+            c2_non_shared = c2_around - c1_around
+            diff = __get_real_number(board, c1) - __get_real_number(board, c2)
+
             if len(c1_non_shared) == diff:
-                for cell in c1_non_shared:
-                    results.append({"type": Const.CellAction.FLAG, "coord": cell})
+                results += [{"type": Const.CellAction.FLAG, "coord": coord} for coord in c1_non_shared]
             elif len(c1_non_shared) == -diff and len(c2_non_shared) == len(c1_non_shared):
-                for cell in c1_non_shared:
-                    results.append({"type": Const.CellAction.OPEN, "coord": cell})
+                results += [{"type": Const.CellAction.OPEN, "coord": coord} for coord in c1_non_shared]
             elif len(c2_non_shared) == 0 and diff == 0:
-                for cell in c1_non_shared:
-                    results.append({"type": Const.CellAction.OPEN, "coord": cell})
+                results += [{"type": Const.CellAction.OPEN, "coord": coord} for coord in c1_non_shared]
+
     return list({v["coord"]: v for v in results}.values())
 
 
-def __is_inside(board_size, neighbor_coord):
-    return 0 <= neighbor_coord[0] < board_size[0] and 0 <= neighbor_coord[1] < board_size[1]
+def __is_inside(board_size, coord):
+    return 0 <= coord[0] < board_size[0] and 0 <= coord[1] < board_size[1]
 
 
-def __is_inside_with(board, neighbor_coord, cell_type):
+def __is_inside_with(board, coord, cell_type):
     board_size = __get_board_size(board)
-
-    return __is_inside(board_size, neighbor_coord) and board[neighbor_coord[0]][neighbor_coord[1]] == cell_type
+    return __is_inside(board_size, coord) and board[coord[0]][coord[1]] == cell_type
 
 
 def __guess(board):
