@@ -121,7 +121,7 @@ def __guess(board, board_status):
     if board_status == Const.BoardStatus.START:
         closed = __get_with(board, Const.Cell.CLOSED)
         return [{"type": Const.CellAction.OPEN, "coord": closed[random.randrange(len(closed))]}]
-    elif len(__get_with(board, Const.Cell.CLOSED)) < 200:
+    elif len(__get_with(board, Const.Cell.CLOSED)) < len(board) * len(board[0]) / 10:
         return []
     else:
         return __get_least_prob(board)
