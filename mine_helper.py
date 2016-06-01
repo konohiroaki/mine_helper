@@ -7,6 +7,7 @@ from pywinauto.controls.HwndWrapper import HwndWrapper
 
 import mine_solver
 from mine_const import Const
+import real_twitter_connection as twitterapi
 
 
 def main():
@@ -15,6 +16,9 @@ def main():
         board = get_board(hwnd)
         status = mine_solver.get_board_status(board)
         if status == Const.BoardStatus.BURST:
+            if mine_solver.get_left_mine(board) < 50:
+                __save_board(hwnd, "test")
+                twitterapi.tweet("test.png")
             reset_board(hwnd)
             continue
         result_list = mine_solver.solve(board)
@@ -38,6 +42,12 @@ def get_board(hwnd):
             cell = __get_cell(img, y, x)
             result_board[y].append(cell)
     return result_board
+
+
+def __save_board(hwnd, name):
+    rect = hwnd.ClientAreaRect()
+    img = ImageGrab.grab((rect.left, rect.top, rect.right, rect.bottom))
+    img.save(name + ".png", "PNG")
 
 
 def __get_cell(img, y, x):
