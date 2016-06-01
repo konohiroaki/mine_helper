@@ -1,4 +1,5 @@
 import os
+import warnings
 import win32api
 import win32con
 
@@ -8,7 +9,7 @@ from pywinauto.controls.HwndWrapper import HwndWrapper
 
 import mine_solver
 from mine_const import Const
-import real_twitter_connection as twitterapi
+from twitter_connection import TwitterApi
 
 
 def main():
@@ -19,7 +20,7 @@ def main():
         if status == Const.BoardStatus.BURST:
             if mine_solver.get_left_mine(board) < 50:
                 __save_board(hwnd, "test")
-                twitterapi.tweet("test.png")
+                TwitterApi().tweet("test.png")
                 os.remove("test.png")
             reset_board(hwnd)
             continue
@@ -110,7 +111,9 @@ def output(board):
 
 
 def reset_board(hwnd):
-    hwnd.MenuSelect("Game->New")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        hwnd.MenuSelect(u"Game->New")
 
 
 def action(hwnd, action_list):
