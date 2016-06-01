@@ -1,3 +1,4 @@
+import os
 import win32api
 import win32con
 
@@ -19,6 +20,7 @@ def main():
             if mine_solver.get_left_mine(board) < 50:
                 __save_board(hwnd, "test")
                 twitterapi.tweet("test.png")
+                os.remove("test.png")
             reset_board(hwnd)
             continue
         result_list = mine_solver.solve(board)
