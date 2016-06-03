@@ -33,7 +33,6 @@ def __init_file():
             file.write("0/0")
 
 
-
 def get_board(hwnd):
     rect = hwnd.ClientAreaRect()
     img = ImageGrab.grab((rect.left + Const.Padding.LEFT, rect.top + Const.Padding.TOP,
