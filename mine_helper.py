@@ -1,6 +1,4 @@
 import os
-import csv
-import time
 import warnings
 import win32api
 import win32con
