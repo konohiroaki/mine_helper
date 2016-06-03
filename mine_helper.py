@@ -25,8 +25,6 @@ def main():
             __tweet_clear_image(hwnd)
             __reset_board(hwnd)
         elif status == Const.BoardStatus.BURST:
-            if mine_solver.get_left_mine(board) < 10:
-                __tweet_burst_image(hwnd)
             __reset_board(hwnd)
         else:
             result_list = mine_solver.solve(board)
@@ -129,12 +127,6 @@ def __tweet_clear_image(hwnd):
         __save_board(hwnd, "test")
         TwitterApi().tweet(message, "test.png")
         os.remove("test.png")
-
-
-def __tweet_burst_image(hwnd):
-    __save_board(hwnd, "test")
-    TwitterApi().tweet("", "test.png")
-    os.remove("test.png")
 
 
 def __reset_board(hwnd):
