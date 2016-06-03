@@ -22,13 +22,15 @@ def solve(board):
 
 
 def get_board_status(board):
-    if len(__get_with(board, Const.Cell.BURST)) != 0:
+    if len(board) == 0:
+        return Const.BoardStatus.LOST_FOCUS
+    elif len(__get_with(board, Const.Cell.BURST)) != 0:
         return Const.BoardStatus.BURST
     elif len(__get_with(board, Const.Cell.CLOSED)) == 0:
         return Const.BoardStatus.END
     elif len(__get_with(board, Const.Cell.ZERO)) != 0:
         return Const.BoardStatus.MIDSTREAM
-    else:
+    elif len(__get_with(board, Const.Cell.ZERO)) == 0:
         return Const.BoardStatus.START
 
 
@@ -121,8 +123,6 @@ def __guess(board, board_status):
     if board_status == Const.BoardStatus.START:
         closed = __get_with(board, Const.Cell.CLOSED)
         return [{"type": Const.CellAction.OPEN, "coord": closed[random.randrange(len(closed))]}]
-    elif len(__get_with(board, Const.Cell.CLOSED)) < len(board) * len(board[0]) / 10:
-        return []
     else:
         return __get_least_prob(board)
 

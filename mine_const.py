@@ -17,6 +17,7 @@ class Const:
         MIDSTREAM = 1
         END = 2
         BURST = 3
+        LOST_FOCUS = 4
 
     class Cell:
         ZERO = (0, "  ")
