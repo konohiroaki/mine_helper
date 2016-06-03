@@ -1,4 +1,6 @@
 import os
+import csv
+import time
 import warnings
 import win32api
 import win32con
@@ -13,21 +15,30 @@ from twitter_connection import TwitterApi
 
 
 def main():
+    __init_file()
     hwnd = HwndWrapper(findwindows.find_windows(class_name="ThunderRT6FormDC", title="Minesweeper X")[0])
     while True:
         board = get_board(hwnd)
         status = mine_solver.get_board_status(board)
-        if status == Const.BoardStatus.BURST:
-            if mine_solver.get_left_mine(board) < 50:
-                __save_board(hwnd, "test")
-                TwitterApi().tweet("test.png")
-                os.remove("test.png")
-            reset_board(hwnd)
-            continue
-        result_list = mine_solver.solve(board)
-        action(hwnd, result_list)
-        if len(result_list) == 0:
+
+        if status == Const.BoardStatus.LOST_FOCUS:
             break
+        if status == Const.BoardStatus.END:
+            __tweet_clear_image(hwnd)
+            __reset_board(hwnd)
+        elif status == Const.BoardStatus.BURST:
+            if mine_solver.get_left_mine(board) < 10:
+                __tweet_burst_image(hwnd)
+            __reset_board(hwnd)
+        else:
+            result_list = mine_solver.solve(board)
+            action(hwnd, result_list)
+
+
+def __init_file():
+    if not os.path.isfile("stats.csv"):
+        with open("stats.csv", "w") as file:
+            file.write("0/0")
 
 
 def get_board(hwnd):
@@ -110,7 +121,31 @@ def output(board):
             print(board[y][x][1], end="")
 
 
-def reset_board(hwnd):
+def __tweet_clear_image(hwnd):
+    with open("stats.csv", "r+") as file:
+        stats = [int(v) for v in file.read().split("/")]
+        message = u"クリア率: " + str(stats[0] + 1) + "/" + str(stats[1] + 1)
+        file.seek(0)
+        file.truncate()
+        file.write(str(stats[0] + 1) + "/" + str(stats[1]))
+        __save_board(hwnd, "test")
+        TwitterApi().tweet(message, "test.png")
+        os.remove("test.png")
+
+
+def __tweet_burst_image(hwnd):
+    __save_board(hwnd, "test")
+    TwitterApi().tweet("", "test.png")
+    os.remove("test.png")
+
+
+def __reset_board(hwnd):
+    with open("stats.csv", "r+") as file:
+        stats = [int(v) for v in file.read().split("/")]
+        file.seek(0)
+        file.truncate()
+        file.write(str(stats[0]) + "/" + str(stats[1] + 1))
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         hwnd.MenuSelect(u"Game->New")

@@ -7,9 +7,9 @@ class TwitterApi:
     ACCESS_TOKEN_KEY = "737989501239230464-d1ft11Et4IlSjd9LCRzG8cZ1VrvcJf2"
     ACCESS_TOKEN_SECRET = "aAOY13lXBa6NDuWLuIHIgI3Ws6V4hUbWkvtXQp60fTax2"
 
-    def tweet(self, file):
+    def tweet(self, text, file):
         api = twitter.Api(consumer_key=self.CONSUMER_KEY,
                           consumer_secret=self.CONSUMER_SECRET,
                           access_token_key=self.ACCESS_TOKEN_KEY,
                           access_token_secret=self.ACCESS_TOKEN_SECRET)
-        api.PostUpdate("", file)
+        api.PostUpdate(text, file)
