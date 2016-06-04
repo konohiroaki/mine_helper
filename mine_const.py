@@ -65,3 +65,28 @@ class Const:
     class CellAction:
         OPEN = 0
         FLAG = 1
+
+    class MineCount:
+        NUMBER = [
+            [1, 1, 1, 0, 1, 1, 1],  # 0
+            [0, 0, 1, 0, 0, 1, 0],  # 1
+            [1, 0, 1, 1, 1, 0, 1],  # 2
+            [1, 0, 1, 1, 0, 1, 1],  # 3
+            [0, 1, 1, 1, 0, 1, 0],  # 4
+            [1, 1, 0, 1, 0, 1, 1],  # 5
+            [1, 1, 0, 1, 1, 1, 1],  # 6
+            [1, 0, 1, 0, 0, 1, 0],  # 7
+            [1, 1, 1, 1, 1, 1, 1],  # 8
+            [1, 1, 1, 1, 0, 1, 1]  # 9
+        ]
+        POSITION = (
+            {"Y": 18, "X": 23},  # top
+            {"Y": 22, "X": 19},  # left top
+            {"Y": 22, "X": 27},  # right top
+            {"Y": 27, "X": 23},  # middle
+            {"Y": 32, "X": 19},  # left bottom
+            {"Y": 32, "X": 27},  # right bottom
+            {"Y": 36, "X": 23}  # bottom
+        )
+        INTERVAL = 13  # interval between each digits
+        COLOR = (255, 0, 0)

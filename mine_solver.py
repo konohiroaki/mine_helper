@@ -34,8 +34,8 @@ def get_board_status(board):
         return Const.BoardStatus.START
 
 
-def get_left_mine(board):
-    return len(__get_with(board, Const.Cell.BURST)) + len(__get_with(board, Const.Cell.MINE))
+def count_with(board, cell_type):
+    return len(__get_with(board, cell_type))
 
 
 def __get_board_size(board):
