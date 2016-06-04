@@ -12,8 +12,10 @@ from mine_const import Const
 
 
 def main():
-    __init_file()
     hwnd = HwndWrapper(findwindows.find_windows(class_name="ThunderRT6FormDC", title="Minesweeper X")[0])
+    board = get_board(hwnd)
+    file_name = __init_file(len(board), len(board[0]), get_mine_count(hwnd, board))
+
     while True:
         board = get_board(hwnd)
         status = mine_solver.get_board_status(board)
@@ -21,16 +23,41 @@ def main():
         if status == Const.BoardStatus.LOST_FOCUS:
             break
         if status == Const.BoardStatus.END or status == Const.BoardStatus.BURST:
-            __reset_board(hwnd)
+            __reset_board(hwnd, file_name)
         else:
             result_list = mine_solver.solve(board)
             action(hwnd, result_list)
 
 
-def __init_file():
-    if not os.path.isfile("stats.csv"):
-        with open("stats.csv", "w") as file:
+def __init_file(height, width, mine):
+    file_name = str(height) + "-" + str(width) + "-" + str(mine) + ".csv"
+    if not os.path.isfile(file_name):
+        with open(file_name, "w") as file:
             file.write("0/0")
+    return file_name
+
+
+def get_mine_count(hwnd, board):
+    flag_count = mine_solver.count_with(board, Const.Cell.FLAGGED)
+
+    rect = hwnd.ClientAreaRect()
+    img = ImageGrab.grab((rect.left, rect.top, rect.right, rect.bottom))
+    mine_count = get_mine_count_digit(img, 3) * 100 + get_mine_count_digit(img, 2) * 10 + get_mine_count_digit(img, 1)
+
+    return mine_count + flag_count
+
+
+def get_mine_count_digit(img, digit):
+    array = []
+    for pos in Const.MineCount.POSITION:
+        if img.getpixel((pos["X"] + (3 - digit) * Const.MineCount.INTERVAL, pos["Y"])) == Const.MineCount.COLOR:
+            array.append(1)
+        else:
+            array.append(0)
+
+    for i, num in enumerate(Const.MineCount.NUMBER):
+        if array == num:
+            return i
 
 
 def get_board(hwnd):
@@ -107,8 +134,8 @@ def output(board):
             print(board[y][x][1], end="")
 
 
-def __reset_board(hwnd):
-    with open("stats.csv", "r+") as file:
+def __reset_board(hwnd, file_name):
+    with open(file_name, "r+") as file:
         stats = [int(v) for v in file.read().split("/")]
         file.seek(0)
         file.truncate()

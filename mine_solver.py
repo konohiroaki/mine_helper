@@ -34,6 +34,10 @@ def get_board_status(board):
         return Const.BoardStatus.START
 
 
+def count_with(board, cell_type):
+    return len(__get_with(board, cell_type))
+
+
 def __get_board_size(board):
     return len(board), len(board[0])
 
